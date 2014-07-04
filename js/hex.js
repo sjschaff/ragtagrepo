@@ -1,6 +1,6 @@
 var RT = RT || {};
 
-RT.HexGrid = new function(scale, width, height) {
+RT.HexGrid = function(scale, width, height) {
 		this.scale = scale;
 		this.width = width;
 		this.height = height;
@@ -11,7 +11,7 @@ RT.HexGrid = new function(scale, width, height) {
 				this.tiles[x][y] = {type: null, height:0};
 		}
 
-		this.Render = new function() {
+		this.Render = function() {
 			var grid = new PIXI.Graphics();
 
 			// Fill Style

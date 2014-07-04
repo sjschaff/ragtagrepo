@@ -26,20 +26,10 @@
 
 	grid = new RT.HexGrid(50, 10, 10);
 	gameContainer.addChild(grid.Render());
-/*
-	var container = new PIXI.DisplayObjectContainer();
-	for (var y = 0; y < 5; ++y) {
-		for (var i = 0; i < 10; ++i) {
-			var scale = 50;
-			hex = createHex(scale, i, y);
-			container.addChild(hex);
-		}
-	}
 
 //	container.rotation = 0.5235987755982988;
 
 	gameContainer.addChild(container);*/
-	gameContainer.addChild(grid);
 	stage.addChild(gameContainer);
 
 	function createHex(scale, x, y) {
