@@ -71,7 +71,7 @@
 
 	function stageMenu(x, y) {
 		// create a texture from an image path
-		var texture = PIXI.Texture.fromImage("img/frends.jpg");
+		var texture = PIXI.Texture.fromImage("img/saccframe.png");
 		// create a new Sprite using the texture
 		var menu = new PIXI.Sprite(texture);
 
