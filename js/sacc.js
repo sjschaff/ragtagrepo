@@ -24,34 +24,12 @@
 	gameContainer.scale.y = -1;
 	gameContainer.scale.x = 2; // iso
 
-	grid = new RT.HexGrid(50, 10, 10);
+	grid = new RT.HexGrid(40, 10, 10);
 	gameContainer.addChild(grid.Render());
 
 //	container.rotation = 0.5235987755982988;
 
 	stage.addChild(gameContainer);
-
-	function createHex(scale, x, y) {
-		var hex = new PIXI.Graphics();
-		hex.beginFill(0xAAAAAA, 1);
-		hex.lineStyle(4, 0x666666, 1);
-		var h = scale*.5; // scale
-		var w = Math.sqrt(.75) * h; // width
-		var ih = .5 * h;// inner height
-		hex.moveTo(0, h);
-		hex.lineTo(w, ih);
-		hex.lineTo(w, -ih);
-		hex.lineTo(0, -h);
-		hex.lineTo(-w, -ih);
-		hex.lineTo(-w, ih);
-		hex.lineTo(0, h);
-		hex.endFill();
-		hex.position.x = x * w;
-//		hex.position.x = scale * (1.5 * x + (y % 2) * .75);
-		hex.position.y = scale * (1.5 * y + (x%2) * .75);
-//		hex.position.y = 200 + y * h;
-		return hex;
-	}
 
 	function animate() {
 		kd.tick();
