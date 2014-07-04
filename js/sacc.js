@@ -11,11 +11,12 @@
 	var saccOn = false;
 	var damage = 0;
 	var masterSacc = [[], [], [], []];
-
 	var menu;
+	
+	var saccBox = new PIXI.DisplayObjectContainer(); 
+
 	$("#canvas-holder").append(renderer.view);
 
-	menu = stageMenu(200,500);
 	requestAnimFrame(animate);
 
 	// Because Simon hates y-down coordinates
@@ -29,8 +30,12 @@
 
 //	container.rotation = 0.5235987755982988;
 
-	stage.addChild(gameContainer);
 
+	menu = stageMenu(0,0);
+	stage.addChild(gameContainer);
+	stage.addChild(saccBox);
+	saccBox.position.x = 400;
+	saccBox.position.y = 750;
 	function createHex(scale, x, y) {
 		var hex = new PIXI.Graphics();
 		hex.beginFill(0xAAAAAA, 1);
@@ -53,15 +58,17 @@
 		return hex;
 	}
 
+
+
 	function animate() {
 		kd.tick();
 
 		if (saccOn) {
-			if (menu.position.y < 500)
-				menu.position.y += 20;
+			if (saccBox.position.y > 300)
+				saccBox.position.y -= 20;
 		} else {
-			if (menu.position.y > 100)
-				menu.position.y -= 20;
+			if (saccBox.position.y < 750)
+				saccBox.position.y += 20;
 		}
 
 		requestAnimFrame(animate);
@@ -72,7 +79,12 @@
 		// create a texture from an image path
 		var texture = PIXI.Texture.fromImage("img/saccframe.png");
 		// create a new Sprite using the texture
-		var menu = new PIXI.Sprite(texture);
+		menu = new PIXI.Sprite(texture);
+
+
+		var back_texture = PIXI.Texture.fromImage("img/saccbg.png");
+		// create a new Sprite using the texture
+		var saccBG = new PIXI.Sprite(back_texture);
 
 		// track 2D position
 		menu.location = new PIXI.Point(x, y);
@@ -82,7 +94,16 @@
 		menu.anchor.x = .5;
 		menu.anchor.y = .5;
 
-		stage.addChild(menu);
+		// track 2D position
+		saccBG.location = new PIXI.Point(x, y);
+
+		saccBG.position.y = y;
+		saccBG.position.x = x;
+		saccBG.anchor.x = .5;
+		saccBG.anchor.y = .5;
+		saccBox.addChild(saccBG);
+		saccBox.addChild(menu);
+	    
 		return menu;
 	}
 
@@ -91,7 +112,9 @@
 	}
 
 	function startDatSacc() {
+
 	}
+
 
 	function closeDatSacc() {
 	}
