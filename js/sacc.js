@@ -29,7 +29,6 @@
 
 //	container.rotation = 0.5235987755982988;
 
-	gameContainer.addChild(container);*/
 	stage.addChild(gameContainer);
 
 	function createHex(scale, x, y) {
