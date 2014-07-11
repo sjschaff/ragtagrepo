@@ -1,6 +1,12 @@
 var RT = RT || {};
 
 RT.Vc = function(x, y) {
+	if (typeof x == 'object') {
+		this.x = x.x;
+		this.y = x.y;
+		return;
+	}
+
 	if (x == undefined)
 		this.x = 0;
 	else
@@ -140,10 +146,6 @@ RT.HexGrid.prototype.RenderHex = function(hx, graphics) {
 	var ih = .5 * h;// inner height
 
 	var ofs = this.GetRealCoord(hx);
-	/*var xofs = hx.x * RT.HexGrid.bases[0].x + hx.y * RT.HexGrid.bases[1].x;
-	var yofs = hx.x * RT.HexGrid.bases[0].y + hx.y * RT.HexGrid.bases[1].y;
-	xofs *= w * 2;
-	yofs *= w * 2;*/
 
 	graphics.moveTo(ofs.x,			ofs.y + h);
 	graphics.lineTo(ofs.x + w,	ofs.y + ih);
@@ -165,7 +167,7 @@ RT.HexGrid.prototype.Render = function() {
 
 			// Line Style
 			grid.lineStyle(4, 0x666666, 1);
-			this.RenderHex(new RT.Vc(x,y), grid);
+			this.RenderHex(new RT.Vc(x-Math.floor(y / 2), y), grid);
 		}
 	}
 

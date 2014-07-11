@@ -13,18 +13,22 @@ RT.Game = function(renderParent, size) {
 	container = this.container = new PIXI.DisplayObjectContainer();
 	renderParent.addChild(container);
 
-	grid = this.grid = new RT.HexGrid(41, 10, 10); // 40 bad, 39 bad ..., wth
-	container.addChild(grid.Render());
+	grid = this.grid = new RT.HexGrid(41, 14, 17); // 40 bad, 39 bad ..., wth
+	gridRender = this.gridRender = grid.Render();
+	gridRender.visible = false;
+	container.addChild(gridRender);
 
 	this.range = new PIXI.Graphics();
 	container.addChild(this.range);
 
-	player = this.player = new PIXI.Graphics();
-	player.lineStyle (0, 0x000000, 0);
-	player.beginFill(0xBB0000);
-	player.drawCircle(0, 0, 10);
-	player.endFill();
+	player = this.player = RT.MakeUnit(0x00BB00);
+	player.position.x = player.position.y = 20;
 	container.addChild(player);
+
+	enemy = this.enemy = RT.MakeUnit(0xBB0000);
+	enemy.position.x = 400;
+	enemy.position.y = 400;
+	container.addChild(enemy);
 
 	this.combatMode = false;
 	this.playerRange = 2;
@@ -32,13 +36,24 @@ RT.Game = function(renderParent, size) {
 	kd.C.press(function YourFae() { me.ToggleCombat(); });
 };
 
+RT.MakeUnit = function(color) {
+	var unit = new PIXI.Graphics();
+	unit.lineStyle(0, 0, 0);
+	unit.beginFill(color);
+	unit.drawCircle(0, 0, 12);
+	unit.endFill();
+	return unit;
+}
+
 RT.Game.prototype.ToggleCombat = function() {
 	if (this.combatMode) {
 		this.combatMode = false;
+		this.gridRender.visible = false;
 		this.range.clear();
 		this.rangeBounds = [];
 	} else {
 		this.combatMode = true;
+		this.gridRender.visible = true;
 
 		// Render movement range
 		var hx = this.playerCenter = this.grid.GetGridCoord(this.player.position);
@@ -49,7 +64,7 @@ RT.Game.prototype.ToggleCombat = function() {
 				if (Math.abs(x + y) <= rg) {
 					this.range.beginFill(0x0000FF, 1);
 					this.range.lineStyle(4, 0x000066, 1);
-					this.grid.RenderHex({x:hx.x+x, y:hx.y+y}, this.range);
+					this.grid.RenderHex(new RT.Vc(hx.x+x, hx.y+y), this.range);
 				}
 			}
 		}
@@ -92,6 +107,13 @@ RT.Game.prototype.Update = function() {
 	this.player.position.y += dir.y * speed;
 
 	this.DoCollisions(this.player.position, this.bounds.concat(this.rangeBounds));
+
+	if (!this.combatMode &&
+		new RT.Vc(this.player.position).Add(new RT.Vc(this.enemy.position).Negate()).Len() < 180) {
+		this.ToggleCombat();
+	}
+	console.log(JSON.stringify(new RT.Vc(this.player.position)));
+	//console.log(JSON.stringify(this.player.position));
 };
 
 RT.Game.prototype.DoCollisions = function(pt, bounds) {
