@@ -4,8 +4,8 @@ RT.GS = {
 	Roam: "roam",
 	Move: "move",
 	ChooseFirst: "choose_first",
-	ChooseFullAttack: "choose_full_attack",
 	ChooseAttack: "choose_attack",
+	Enemy: "enemy",
 };
 
 
@@ -41,6 +41,7 @@ RT.Game = function(renderParent, size) {
 	];
 	this.rangeBounds = [];
 	this.playerRange = 3;
+	this.enemyHealth = 100;
 
 	// Action Hooks
 	this.BindKeys();
@@ -88,6 +89,7 @@ RT.Game.prototype.TransitionState = function(newState) {
 		this.SetMessage("You have entered combat!");
 		this.SetAction("Press 'M' to move or 'F' for a full attack");
 		this.ButtonHandler = "ChooseFirstHandler";
+		this.numActions = 0;
 	}
 	// Move
 	else if (newState == RT.GS.Move) {
@@ -97,25 +99,70 @@ RT.Game.prototype.TransitionState = function(newState) {
 		this.ShowBounds();
 	}
 	// Choose Attack
-	else if (newState == RT.GS.ChooseFullAttack || newState == RT.GS.ChooseAttack) {
-		this.SetAction("Choose Your Attack!");
+	else if (newState == RT.GS.ChooseAttack) {
+		if (this.numActions == 0)
+			this.SetAction("Press 1-9 to attack!");
+		else
+			this.SetAction("Press M to move, or 1-9 to attack!");
+		this.ButtonHandler = "ChooseAttackHandler";
+	} else if (newState == RT.GS.Enemy) {
+		var dmg = Math.round(4 + Math.random() * 8);
+		this.SetMessage("The enemy attacks for " + dmg + " damage.");
+		this.SetAction("&nbsp;");
 		this.ButtonHandler = null;
+
+		var me = this;
+		setTimeout(function() {
+			me.TransitionState(RT.GS.ChooseFirst);
+		}, 2000);
 	}
 
 	this.currentState = newState;
+}
+
+RT.Game.prototype.EndAction = function() {
+		++this.numActions;
+		this.TransitionState(RT.GS.ChooseAttack);
+}
+
+RT.Game.prototype.ChooseAttackHandler = function(btn) {
+	num = btn.charCodeAt(0) - '0'.charCodeAt(0);
+	console.log("num: " + num );
+	if ('m' == btn && this.numActions > 0) {
+		this.TransitionState(RT.GS.Move);
+	} else if (num >= 0 && num <= 9) {
+		var dmg = Math.round((2 - this.numActions) * (Math.random() * 10 + 5));
+		this.SetMessage("You deal " + dmg + " damage to the enemy.");
+		this.SetAction("&nbsp;");
+		this.enemyHealth -= dmg;
+
+		this.ButtonHandler = null;
+		var me = this;
+		setTimeout(function() {
+			if (me.enemyHealth <= 0) {
+				me.SetMessage("The Enemy Has Died");
+				me.enemy.visible = false;
+				setTimeout(function() {
+					me.TransitionState(RT.GS.Roam);
+				}, 2000);
+			} else {
+				me.TransitionState(RT.GS.Enemy);
+			}
+		}, 2000);
+	}
 }
 
 RT.Game.prototype.ChooseFirstHandler = function(btn) {
 	if ('m' == btn) {
 		this.TransitionState(RT.GS.Move);
 	} else if ('f' == btn) {
-		this.TransitionState(RT.GS.ChooseFullAttack);
+		this.TransitionState(RT.GS.ChooseAttack);
 	}
 }
 
 RT.Game.prototype.MoveHandler = function(btn) {
 	if (btn == 'space') {
-		this.TransitionState(RT.GS.ChooseAttack);
+		this.EndAction();
 	}
 }
 
@@ -136,7 +183,7 @@ RT.Game.prototype.Update = function() {
 
 		this.DoCollisions(this.player.position, this.bounds.concat(this.rangeBounds));
 
-		if (this.currentState == RT.GS.Roam) {
+		if (this.currentState == RT.GS.Roam && this.enemy.visible) {
 			var p = new RT.Vc(this.player.position);
 			var e = new RT.Vc(this.enemy.position);
 			if (p.Add(e.Negate()).Len() < 180)
@@ -181,8 +228,6 @@ RT.Game.prototype.ShowBounds = function() {
 			new RT.Line(center.Add(axis.Negate()), dir)
 		);
 	}
-
-	console.log("bunds: " + JSON.stringify(this.rangeBounds));
 }
 
 RT.Game.prototype.DoCollisions = function(pt, bounds) {
@@ -216,4 +261,10 @@ RT.Game.prototype.BindKeys = function() {
 	kd.F.press(function() { me.ButtonPress('f'); });
 	kd.ENTER.press(function() { me.ButtonPress('enter'); });
 	kd.SPACE.press(function() { me.ButtonPress('space'); });
+
+	document.addEventListener("keyup", function(evt) {
+		if (evt.keyCode >= '0'.charCodeAt(0) && evt.keyCode <= '9'.charCodeAt(0)) {
+			me.ButtonPress(String.fromCharCode(evt.keyCode));
+		}
+	});
 }
