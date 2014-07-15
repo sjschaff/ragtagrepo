@@ -3,6 +3,7 @@ var RT = RT || {};
 RT.GS = {
 	Roam: "roam",
 	Move: "move",
+	Sacc: "sacc",
 	ChooseFirst: "choose_first",
 	ChooseAttack: "choose_attack",
 	Enemy: "enemy",
@@ -31,6 +32,19 @@ RT.Game = function(renderParent, size) {
 	enemy.position.y = 400;
 	container.addChild(enemy);
 
+ 
+	//Set the sacc ui
+
+	saccOn = this.saccOn = false; 
+	saccBox = this.saccBox = new PIXI.DisplayObjectContainer(); 
+
+	this.SetSaccUI(0,0);
+
+	renderParent.addChild(saccBox);
+	saccBox.position.x = 400;
+	saccBox.position.y = 750;
+
+
 	// Game State
 	this.TransitionState(RT.GS.Roam);
 	this.bounds = [
@@ -47,6 +61,7 @@ RT.Game = function(renderParent, size) {
 	this.BindKeys();
 };
 
+
 RT.MakeUnit = function(color) {
 	var unit = new PIXI.Graphics();
 	unit.lineStyle(0, 0, 0);
@@ -55,6 +70,35 @@ RT.MakeUnit = function(color) {
 	unit.endFill();
 	return unit;
 }
+
+
+RT.Game.prototype.SetSaccUI = function(x, y) {
+	// create a texture from an image path
+	var texture = PIXI.Texture.fromImage("img/saccframe.png");
+	// Create a new Sprite using the texture
+	this.saccUI = new PIXI.Sprite(texture);
+
+	var back_texture = PIXI.Texture.fromImage("img/saccbg.png");
+	// create a new Sprite using the texture
+	var saccBG = new PIXI.Sprite(back_texture);
+
+	// track 2D position
+	this.saccUI.location = new PIXI.Point(x, y);
+
+	this.saccUI.position.y = y;
+	this.saccUI.position.x = x;
+	this.saccUI.anchor.x = .5;
+	this.saccUI.anchor.y = .5;
+		// track 2D position
+	saccBG.location = new PIXI.Point(x, y);
+	saccBG.position.y = y;
+	saccBG.position.x = x;
+	saccBG.anchor.x = .5;
+	saccBG.anchor.y = .5;
+	this.saccBox.addChild(saccBG);
+	this.saccBox.addChild(this.saccUI);  
+}
+
 
 RT.Game.prototype.TransitionState = function(newState) {
 	/*
@@ -131,6 +175,7 @@ RT.Game.prototype.ChooseAttackHandler = function(btn) {
 	if ('m' == btn && this.numActions > 0) {
 		this.TransitionState(RT.GS.Move);
 	} else if (num >= 0 && num <= 9) {
+		alert(this.popDatSacc());
 		var dmg = Math.round((2 - this.numActions) * (Math.random() * 10 + 5));
 		this.SetMessage("You deal " + dmg + " damage to the enemy.");
 		this.SetAction("&nbsp;");
@@ -150,6 +195,15 @@ RT.Game.prototype.ChooseAttackHandler = function(btn) {
 			}
 		}, 2000);
 	}
+}
+
+RT.Game.prototype.popDatSacc = function() {
+
+	this.saccOn = true;
+	this.TransitionState(RT.GS.Sacc);
+	alert( "wooo");
+
+	return "hat";
 }
 
 RT.Game.prototype.ChooseFirstHandler = function(btn) {
@@ -181,14 +235,27 @@ RT.Game.prototype.Update = function() {
 		this.player.position.x += dir.x * speed;
 		this.player.position.y += dir.y * speed;
 
-		this.DoCollisions(this.player.position, this.bounds.concat(this.rangeBounds));
-
+		this.DoCollisions(this.player.position, this.bounds.concat(this.rangeBounds))	
+	
 		if (this.currentState == RT.GS.Roam && this.enemy.visible) {
 			var p = new RT.Vc(this.player.position);
 			var e = new RT.Vc(this.enemy.position);
 			if (p.Add(e.Negate()).Len() < 180)
 				this.TransitionState(RT.GS.ChooseFirst);
 		}
+	}
+	if (this.currentState == RT.GS.Sacc) {
+		if (this.saccOn) {
+			if (this.saccBox.position.y > 300)
+				this.saccBox.position.y -= 50;
+		} else {
+			if (this.saccBox.position.y < 750)
+				this.saccBox.position.y += 50;
+			else 
+			    this.TransitionState(RT.GS.ChooseAttack);
+		}
+		if (kd.ENTER.isDown()) saccOn = false;
+
 	}
 	//console.log(JSON.stringify(this.player.position)); becomes null at some point?
 };

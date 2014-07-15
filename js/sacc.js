@@ -11,9 +11,8 @@ $("document").ready(function() {
 	var saccOn = false;
 	var damage = 0;
 	var masterSacc = [[], [], [], []];
-	var menu;
 	
-	var saccBox = new PIXI.DisplayObjectContainer(); 
+
 
 	$("#canvas-holder").append(renderer.view);
 
@@ -24,12 +23,7 @@ $("document").ready(function() {
 	gameContainer.scale.x = 2; // iso
 
 	var game = new RT.Game(gameContainer, new RT.Vc(WIDTH*.5, HEIGHT));
-
-	menu = stageMenu(0,0);
 	stage.addChild(gameContainer);
-	stage.addChild(saccBox);
-	saccBox.position.x = 400;
-	saccBox.position.y = 750;
 	
 	requestAnimFrame(render);
 	setInterval(update, 33);
@@ -38,13 +32,6 @@ $("document").ready(function() {
 		kd.tick();
 		game.Update();
 		
-		if (saccOn) {
-			if (saccBox.position.y > 300)
-				saccBox.position.y -= 20;
-		} else {
-			if (saccBox.position.y < 750)
-				saccBox.position.y += 20;
-		}
 	}
 
 	function render() {
@@ -52,44 +39,24 @@ $("document").ready(function() {
 		renderer.render(stage);
 	}
 
-	function stageMenu(x, y) {
-		// create a texture from an image path
-		var texture = PIXI.Texture.fromImage("img/saccframe.png");
-		// create a new Sprite using the texture
-		menu = new PIXI.Sprite(texture);
-
-
-		var back_texture = PIXI.Texture.fromImage("img/saccbg.png");
-		// create a new Sprite using the texture
-		var saccBG = new PIXI.Sprite(back_texture);
-
-		// track 2D position
-		menu.location = new PIXI.Point(x, y);
-
-		menu.position.y = y;
-		menu.position.x = x;
-		menu.anchor.x = .5;
-		menu.anchor.y = .5;
-
-		// track 2D position
-		saccBG.location = new PIXI.Point(x, y);
-
-		saccBG.position.y = y;
-		saccBG.position.x = x;
-		saccBG.anchor.x = .5;
-		saccBG.anchor.y = .5;
-		saccBox.addChild(saccBG);
-		saccBox.addChild(menu);
-	    
-		return menu;
-	}
-
 	function popDatSacc() {
 		saccOn = !saccOn;
 	}
 
 	function startDatSacc() {
+	    if (saccOn) {
+		//draw the frame
+		//register keys
+		
+		//add keys to string
+		// on first key press
+		// start timer
+		//string ends with
+		// combo calculator
+		// when time is zero
+		// stop, return number.
 
+	    }
 	}
 
 
