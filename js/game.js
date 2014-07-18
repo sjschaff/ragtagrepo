@@ -329,7 +329,7 @@ RT.Game.prototype.Update = function() {
 //			if (this.saccRunning)
 
 		} else {
-			this.stopDatSacc();
+			this.StopDatSacc();
 			if (this.saccBox.position.y > 0)
 				this.saccBox.position.y -= 50;
 			else 
