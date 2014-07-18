@@ -37,12 +37,16 @@ RT.Game = function(renderParent, size) {
 
 	saccOn = this.saccOn = false; 
 	saccBox = this.saccBox = new PIXI.DisplayObjectContainer(); 
-
+	saccRows = this.saccRows = []; 
+	comboString = this.comboString = ""; 
+	this.tokenCalculations = {spd: 0, def: 0, atk: 0, fuck: 0};
+	this.saccRunning = false;
 	this.SetSaccUI(0,0);
 
-	renderParent.addChild(saccBox);
 	saccBox.position.x = 400;
-	saccBox.position.y = 750;
+	saccBox.position.y =00;
+    saccBox.scale.x = .5;
+    renderParent.addChild(saccBox);
 
 
 	// Game State
@@ -87,14 +91,14 @@ RT.Game.prototype.SetSaccUI = function(x, y) {
 
 	this.saccUI.position.y = y;
 	this.saccUI.position.x = x;
-	this.saccUI.anchor.x = .5;
-	this.saccUI.anchor.y = .5;
+	this.saccUI.anchor.x = 1;
+	this.saccUI.anchor.y = 1;
 		// track 2D position
 	saccBG.location = new PIXI.Point(x, y);
 	saccBG.position.y = y;
 	saccBG.position.x = x;
-	saccBG.anchor.x = .5;
-	saccBG.anchor.y = .5;
+	saccBG.anchor.x = 1;
+	saccBG.anchor.y = 1;
 	this.saccBox.addChild(saccBG);
 	this.saccBox.addChild(this.saccUI);  
 }
@@ -159,7 +163,11 @@ RT.Game.prototype.TransitionState = function(newState) {
 		setTimeout(function() {
 			me.TransitionState(RT.GS.ChooseFirst);
 		}, 2000);
-	}
+	} else if (newState = RT.GS.Sacc) {
+		
+	}	
+
+
 
 	this.currentState = newState;
 }
@@ -175,36 +183,97 @@ RT.Game.prototype.ChooseAttackHandler = function(btn) {
 	if ('m' == btn && this.numActions > 0) {
 		this.TransitionState(RT.GS.Move);
 	} else if (num >= 0 && num <= 9) {
-		alert(this.popDatSacc());
-		var dmg = Math.round((2 - this.numActions) * (Math.random() * 10 + 5));
-		this.SetMessage("You deal " + dmg + " damage to the enemy.");
-		this.SetAction("&nbsp;");
-		this.enemyHealth -= dmg;
-
-		this.ButtonHandler = null;
-		var me = this;
-		setTimeout(function() {
-			if (me.enemyHealth <= 0) {
-				me.SetMessage("The Enemy Has Died");
-				me.enemy.visible = false;
-				setTimeout(function() {
-					me.TransitionState(RT.GS.Roam);
-				}, 2000);
-			} else {
-				me.TransitionState(RT.GS.Enemy);
-			}
-		}, 2000);
+		this.PopDatSacc();
+		if (!this.saccRunning)
+			var dmg = 2- this.numActions * this.procssDamage(); //Math.round((2 - this.numActions) * (Math.random() * 10 + 5));
+		if (!this.saccOn)
+			this.HandleDamageOutcome(dmg);
 	}
 }
 
-RT.Game.prototype.popDatSacc = function() {
+RT.Game.prototype.HandleDamageOutcome = function(dmg) {
+	this.SetMessage("You deal " + dmg + " damage to the enemy.");
+	this.SetAction("&nbsp;");
+	this.enemyHealth -= dmg;
+	this.ButtonHandler = null;
+	var me = this;
+	setTimeout(function() {
+		if (me.enemyHealth <= 0) {
+			me.SetMessage("The Enemy Has Died");
+			me.enemy.visible = false;
+			setTimeout(function() {
+				me.TransitionState(RT.GS.Roam);
+			}, 2000);
+		} else {
+			me.TransitionState(RT.GS.Enemy);
+		}
+	}, 2000);
 
+}
+
+RT.Game.prototype.PopDatSacc = function() {
+	this.comboString = "";
+	this.tokenCalculations = {spd: 0, def: 0, atk: 0, fuck: 0};
 	this.saccOn = true;
 	this.TransitionState(RT.GS.Sacc);
-	alert( "wooo");
 
-	return "hat";
+	for (var i = 0 ; i < 4; i++)
+	    this.GenerateSaccRows();
+
+	this.StartDatSacc();
 }
+
+RT.Game.prototype.StartDatSacc = function () {
+	var me = this;
+	kd.Q.press(function() { me.FondleSacc('q'); });
+	kd.W.press(function() { me.FondleSacc('w'); });
+	kd.O.press(function() { me.FondleSacc('o'); });
+	kd.P.press(function() { me.FondleSacc('p'); });
+	this.saccRunning = true;
+}
+
+RT.Game.prototype.StopDatSacc = function () {
+	kd.Q.prototype.unbindPress = function(){};
+	kd.W.prototype.unbindPress = function(){};
+	kd.O.prototype.unbindPress = function(){};
+	kd.P.prototype.unbindPress = function(){};
+
+}
+
+RT.Game.prototype.FondleSacc = function (btn) {
+	var lastToken = "";
+	if (btn == 'q') 
+		lastToken = this.saccRows[0][0];
+	if (btn == 'w') 
+		lastToken = this.saccRows[0][1];
+	if (btn == 'o') 
+		lastToken = this.saccRows[0][2];
+	if (btn == 'p') 
+		lastToken = this.saccRows[0][3];
+	this.comboString = this.comboString + lastToken;
+	this.tokenCalculations[lastToken]++;
+	console.log(this.tokenCalculations);
+	console.log(this.comboString);
+	this.saccRows.shift();
+	this.GenerateSaccRows();	
+}
+
+RT.Game.prototype.GenerateSaccRows = function () {
+
+	var arr = ["atk", "spd", "def", "fuck"];
+	var row = [];
+	for (var i = 3; i >= 0; i--) {
+		var num = Math.floor(Math.random() * (i + 1 ));
+		var rem = arr.splice(num, 1);
+		row.push(rem[0]);
+
+	}
+	this.saccRows.push(row);
+}
+
+RT.Game.prototype.ProcessDamage = function () {
+}
+
 
 RT.Game.prototype.ChooseFirstHandler = function(btn) {
 	if ('m' == btn) {
@@ -221,6 +290,7 @@ RT.Game.prototype.MoveHandler = function(btn) {
 }
 
 RT.Game.prototype.Update = function() {
+
 	if (this.currentState == RT.GS.Roam || this.currentState == RT.GS.Move) {
 		var speed = 5;
 		var dir = new RT.Vc();
@@ -243,20 +313,30 @@ RT.Game.prototype.Update = function() {
 			if (p.Add(e.Negate()).Len() < 180)
 				this.TransitionState(RT.GS.ChooseFirst);
 		}
-	}
-	if (this.currentState == RT.GS.Sacc) {
-		if (this.saccOn) {
-			if (this.saccBox.position.y > 300)
-				this.saccBox.position.y -= 50;
-		} else {
-			if (this.saccBox.position.y < 750)
-				this.saccBox.position.y += 50;
-			else 
-			    this.TransitionState(RT.GS.ChooseAttack);
-		}
-		if (kd.ENTER.isDown()) saccOn = false;
 
 	}
+
+	if (kd.ENTER.isDown()) {
+		this.saccOn = false;
+		this.saccRunning = false;
+}
+	
+	if (this.currentState == RT.GS.Sacc) {
+		//just animate the menu coming up and down	
+		if (this.saccOn) {
+			if (this.saccBox.position.y < 450)
+				this.saccBox.position.y += 50;
+//			if (this.saccRunning)
+
+		} else {
+			this.stopDatSacc();
+			if (this.saccBox.position.y > 0)
+				this.saccBox.position.y -= 50;
+			else 
+				this.TransitionState(RT.GS.ChooseAttack);
+		}
+	}
+	
 	//console.log(JSON.stringify(this.player.position)); becomes null at some point?
 };
 
@@ -274,7 +354,7 @@ RT.Game.prototype.ShowBounds = function() {
 			}
 		}
 	}
-
+	
 	// Update movement bounds
 	var axes = [
 		this.grid.GetBasis(0).Add( this.grid.GetBasis(1) ),

@@ -60,34 +60,6 @@ $("document").ready(function() {
 	}
 
 
-	function closeDatSacc() {
-	}
-
-	function countDatSacc() {
-		damage++;
-	}
-
-	function moveMenu(byX, byY) {
-		alert("derr");
-	}
-
-	function moveDown(e) {
-		true ? moveMenu(0, 2) : moveMenu(2, 2);
-	}
-
-	function moveLeft(e) {
-		true ? moveMenu(-2, 0) : moveMenu(-2, 2);
-	}
-
-	function moveRight(e) {
-		true ? moveMenu(2, 0) : moveMenu(2, -2);
-	}
-
-	// game loop optimized keyboard handling
-	kd.ENTER.press(popDatSacc);
-	kd.DOWN.down(moveDown);
-	kd.LEFT.down(moveLeft);
-	kd.RIGHT.down(moveRight);
 
 	window.addEventListener("keydown", function(e) {
 			// space and arrow keys
