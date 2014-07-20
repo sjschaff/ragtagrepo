@@ -1,5 +1,7 @@
 var RT = RT || {};
-
+var time = new Date;
+var saccFondled = false;
+var secondsElapsed = 0;
 RT.GS = {
 	Roam: "roam",
 	Move: "move",
@@ -34,20 +36,36 @@ RT.Game = function(renderParent, size) {
 
  
 	//Set the sacc ui
-
+	this.interval;
+	this.text = false;
+	this.damageText = false;
 	saccOn = this.saccOn = false; 
 	saccBox = this.saccBox = new PIXI.DisplayObjectContainer(); 
+	timerTextContainer = this.timerTextContainer = new PIXI.DisplayObjectContainer();
+	damageTextContainer = this.damageTextContainer = new PIXI.DisplayObjectContainer();
 	saccRows = this.saccRows = []; 
 	comboString = this.comboString = ""; 
 	this.tokenCalculations = {spd: 0, def: 0, atk: 0, fuck: 0};
 	this.saccRunning = false;
 	this.SetSaccUI(0,0);
 
-	saccBox.position.x = 400;
-	saccBox.position.y =00;
-    saccBox.scale.x = .5;
-    renderParent.addChild(saccBox);
 
+	saccBox.position.x = 50;
+	saccBox.position.y = -450;
+	saccBox.scale.y = 1;
+	saccBox.scale.x = .5;
+	renderParent.addChild(saccBox);
+	timerTextContainer.scale.y = -1;
+	timerTextContainer.scale.x = .6;
+	timerTextContainer.position.x = 300;
+	timerTextContainer.position.y = 470;
+	renderParent.addChild(timerTextContainer);
+
+	damageTextContainer.scale.y = -1;
+	damageTextContainer.scale.x = .6;
+	damageTextContainer.position.x = 100;
+	damageTextContainer.position.y = 450;
+	renderParent.addChild(damageTextContainer);
 
 	// Game State
 	this.TransitionState(RT.GS.Roam);
@@ -84,21 +102,21 @@ RT.Game.prototype.SetSaccUI = function(x, y) {
 
 	var back_texture = PIXI.Texture.fromImage("img/saccbg.png");
 	// create a new Sprite using the texture
-	var saccBG = new PIXI.Sprite(back_texture);
+	this.saccBG = saccBG = new PIXI.Sprite(back_texture);
 
 	// track 2D position
 	this.saccUI.location = new PIXI.Point(x, y);
 
 	this.saccUI.position.y = y;
 	this.saccUI.position.x = x;
-	this.saccUI.anchor.x = 1;
-	this.saccUI.anchor.y = 1;
+	this.saccUI.anchor.x = 0;
+	this.saccUI.anchor.y = 0;
 		// track 2D position
 	saccBG.location = new PIXI.Point(x, y);
 	saccBG.position.y = y;
 	saccBG.position.x = x;
-	saccBG.anchor.x = 1;
-	saccBG.anchor.y = 1;
+	saccBG.anchor.x = 0;
+	saccBG.anchor.y = 0;
 	this.saccBox.addChild(saccBG);
 	this.saccBox.addChild(this.saccUI);  
 }
@@ -184,10 +202,6 @@ RT.Game.prototype.ChooseAttackHandler = function(btn) {
 		this.TransitionState(RT.GS.Move);
 	} else if (num >= 0 && num <= 9) {
 		this.PopDatSacc();
-		if (!this.saccRunning)
-			var dmg = 2- this.numActions * this.procssDamage(); //Math.round((2 - this.numActions) * (Math.random() * 10 + 5));
-		if (!this.saccOn)
-			this.HandleDamageOutcome(dmg);
 	}
 }
 
@@ -201,6 +215,7 @@ RT.Game.prototype.HandleDamageOutcome = function(dmg) {
 		if (me.enemyHealth <= 0) {
 			me.SetMessage("The Enemy Has Died");
 			me.enemy.visible = false;
+
 			setTimeout(function() {
 				me.TransitionState(RT.GS.Roam);
 			}, 2000);
@@ -212,50 +227,110 @@ RT.Game.prototype.HandleDamageOutcome = function(dmg) {
 }
 
 RT.Game.prototype.PopDatSacc = function() {
+
 	this.comboString = "";
 	this.tokenCalculations = {spd: 0, def: 0, atk: 0, fuck: 0};
 	this.saccOn = true;
+
 	this.TransitionState(RT.GS.Sacc);
 
 	for (var i = 0 ; i < 4; i++)
 	    this.GenerateSaccRows();
-
+	this.RenderSaccRows();
 	this.StartDatSacc();
 }
 
 RT.Game.prototype.StartDatSacc = function () {
+
 	var me = this;
 	kd.Q.press(function() { me.FondleSacc('q'); });
 	kd.W.press(function() { me.FondleSacc('w'); });
 	kd.O.press(function() { me.FondleSacc('o'); });
 	kd.P.press(function() { me.FondleSacc('p'); });
+
 	this.saccRunning = true;
 }
 
 RT.Game.prototype.StopDatSacc = function () {
-	kd.Q.prototype.unbindPress = function(){};
-	kd.W.prototype.unbindPress = function(){};
-	kd.O.prototype.unbindPress = function(){};
-	kd.P.prototype.unbindPress = function(){};
+	kd.Q.unbindPress(function(){});
+	kd.W.unbindPress(function(){});
+	kd.O.unbindPress(function(){});
+	kd.P.unbindPress(function(){});
+	this.RefreshSacc();
+	saccFondled = false;
+}
 
+RT.Game.prototype.RefreshSacc = function () {
+	this.saccBox.removeChild(this.saccUI);
+	this.saccBox.removeChild(this.saccBG);
+	this.SetSaccUI(0,0);
 }
 
 RT.Game.prototype.FondleSacc = function (btn) {
 	var lastToken = "";
-	if (btn == 'q') 
+	if (!saccFondled) {
+		time = new Date;
+		var me = this;
+		this.interval = setInterval(function() {
+			secondsElapsed = (new Date - time)/1000;
+			if (!me.text){
+				me.text = new PIXI.Text(10 -secondsElapsed, {font:"50px Arial", fill:"black"});
+				me.timerTextContainer.addChild(me.text);
+				me.damageText = new PIXI.Text("Damage: 0", {font:"30px Arial", fill:"black"});
+				me.damageTextContainer.addChild(me.damageText);
+			} else {
+				if (secondsElapsed > 10) {
+					me.text.setText("FINISHED!");
+					me.StopDatSacc();
+					me.damageTextContainer.position.y-=200;
+					me.damageText.setStyle({font:"50px Arial", fill:"red"});
+					setTimeout(function() {	
+						me.saccOn = false;
+						me.text.setText("");
+						me.text.setStyle({font:"50px Arial", fill:"black"});
+						me.damageText.setText("");
+						me.damageTextContainer.position.y+=200;
+						me.damageText.setStyle({font:"50px Arial", fill:"black"});
+					}, 2000);
+					clearInterval(me.interval);
+				} else if (secondsElapsed > 7) {
+					me.text.setStyle({font:"bold 50px Arial", fill:"red"});
+					me.text.setText(Math.round((10 -secondsElapsed) * 100)/100);
+				}else {
+					me.text.setText(Math.round((10 -secondsElapsed) * 100)/100);
+					me.text.setStyle({font:"50px Arial", fill:"black"});
+				}
+				var dmg = (2- me.numActions) * ((me.tokenCalculations["atk"] - me.tokenCalculations["fuck"]) * me.tokenCalculations["spd"]);
+				me.damageText.setText("Damage:" + dmg); 
+			}
+		}, 10);
+				
+	}
+	if (btn == 'q') {
 		lastToken = this.saccRows[0][0];
-	if (btn == 'w') 
+		saccFondled = true;
+	}
+	if (btn == 'w') {
 		lastToken = this.saccRows[0][1];
-	if (btn == 'o') 
+		saccFondled = true;
+	}
+	if (btn == 'o') {
 		lastToken = this.saccRows[0][2];
-	if (btn == 'p') 
+		saccFondled = true;
+	}
+	if (btn == 'p') {
 		lastToken = this.saccRows[0][3];
+		saccFondled = true;
+	
+	}
 	this.comboString = this.comboString + lastToken;
 	this.tokenCalculations[lastToken]++;
-	console.log(this.tokenCalculations);
-	console.log(this.comboString);
+	if (this.comboString.length > 70)
+		this.RefreshSacc();
+
 	this.saccRows.shift();
 	this.GenerateSaccRows();	
+	this.RenderSaccRows();
 }
 
 RT.Game.prototype.GenerateSaccRows = function () {
@@ -271,7 +346,95 @@ RT.Game.prototype.GenerateSaccRows = function () {
 	this.saccRows.push(row);
 }
 
+RT.Game.prototype.RenderSaccRows = function () {
+
+	// create block textures from an image path
+	var fuckTexture = PIXI.Texture.fromImage("img/white-block.png");
+	var atkTexture = PIXI.Texture.fromImage("img/power-block.png");
+	var defTexture = PIXI.Texture.fromImage("img/shield-block.png");
+	var spdTexture = PIXI.Texture.fromImage("img/slash-block.png");
+	var heightOffset = 15;
+			
+	for (var i = 0; i < 4; i++) {
+	
+		var widthOffset = 90;
+		for (var j = 0; j < 4; j++) {
+
+			// Create a new Sprite using the texture
+			var fuckBlock = new PIXI.Sprite(fuckTexture);
+			var atkBlock = new PIXI.Sprite(atkTexture);
+			var defBlock = new PIXI.Sprite(defTexture);
+			var spdBlock = new PIXI.Sprite(spdTexture);
+
+
+			// SIMON FORGIVE ME THIS IS THE WORST
+			// TODO: Turn blocks into JSON object, serializable to refactor following mess:
+			if (this.saccRows[i][j] == 'fuck') {
+				fuckBlock.location = new PIXI.Point(0, 0);
+				fuckBlock.position.y = heightOffset;
+				fuckBlock.position.x = widthOffset;
+				fuckBlock.anchor.x = j+1;
+				fuckBlock.anchor.y = i+1;
+				fuckBlock.scale.y = -1;
+				fuckBlock.scale.x = -1;
+				this.saccBG.addChild(fuckBlock);  
+			}
+			if (this.saccRows[i][j] == 'atk') {
+				atkBlock.location = new PIXI.Point(0, 0);
+				atkBlock.position.y = heightOffset;
+				atkBlock.position.x = widthOffset;
+				atkBlock.anchor.x = j+1;
+				atkBlock.anchor.y = i+1;
+				atkBlock.scale.y = -1;
+				atkBlock.scale.x = -1;
+				this.saccBG.addChild(atkBlock);  
+			}
+
+			if (this.saccRows[i][j] == 'def') {
+				defBlock.location = new PIXI.Point(0, 0);
+				defBlock.position.y = heightOffset;
+				defBlock.position.x = widthOffset;
+				defBlock.anchor.x = j+1;
+				defBlock.anchor.y = i+1;
+				defBlock.scale.y = -1;
+				defBlock.scale.x = -1;
+				this.saccBG.addChild(defBlock);  
+			}
+
+			if (this.saccRows[i][j] == 'spd') {
+				spdBlock.location = new PIXI.Point(0, 0);
+				spdBlock.position.y = heightOffset;
+				spdBlock.position.x = widthOffset;
+				spdBlock.anchor.x = j+1;
+				spdBlock.anchor.y = i+1;
+				spdBlock.scale.y = -1;
+				spdBlock.scale.x = -1;
+				this.saccBG.addChild(spdBlock);  
+			}
+
+			widthOffset += 10;
+		}
+
+		heightOffset += 15;
+	}
+
+/*
+	// track 2D position
+	atkBlock.location = new PIXI.Point(0, 0);
+	atkBlock.position.y = 15;
+	atkBlock.position.x = 220;
+	atkBlock.anchor.x = 0;
+	atkBlock.anchor.y = 1;
+	atkBlock.scale.y = -1;
+
+	this.saccBG.addChild(atkBlock);
+*/
+}
+
 RT.Game.prototype.ProcessDamage = function () {
+	var dmg = (2- this.numActions) * ((this.tokenCalculations["atk"] - this.tokenCalculations["fuck"]) * this.tokenCalculations["spd"]);
+
+	this.HandleDamageOutcome(dmg);
 }
 
 
@@ -316,27 +479,26 @@ RT.Game.prototype.Update = function() {
 
 	}
 
-	if (kd.ENTER.isDown()) {
-		this.saccOn = false;
-		this.saccRunning = false;
-}
 	
 	if (this.currentState == RT.GS.Sacc) {
 		//just animate the menu coming up and down	
-		if (this.saccOn) {
-			if (this.saccBox.position.y < 450)
-				this.saccBox.position.y += 50;
-//			if (this.saccRunning)
 
+		if (this.saccOn) {
+
+			if (this.saccBox.position.y < 0)
+				this.saccBox.position.y += 50;
+			
 		} else {
-			this.StopDatSacc();
-			if (this.saccBox.position.y > 0)
+
+
+			if (this.saccBox.position.y > -450)
 				this.saccBox.position.y -= 50;
-			else 
-				this.TransitionState(RT.GS.ChooseAttack);
+			if (this.saccRunning)
+				this.ProcessDamage();
+			this.saccRunning = false;
 		}
 	}
-	
+
 	//console.log(JSON.stringify(this.player.position)); becomes null at some point?
 };
 
